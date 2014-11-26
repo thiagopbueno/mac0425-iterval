@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# MODEL ##################################################
+# MDP ####################################################
 
 states = [:s1, :s2, :s3, :s4, :s5]
 
@@ -54,15 +54,18 @@ gamma = 0.9
 
 # VALUE ITERATION ########################################
 
-epsilon = 0.000000000001
+epsilon = 0.001		# erro máximo
 
-v  = [{}]
-pi = []
+pi = []				# politica
+v  = [{}]			# função valor
+
+# inicializa V(s)
 states.each do |s|
 	v[0][s] = rewards[s]
 end
 
-n = 0
+n = 0 # contador de iterações
+
 while 1
 	n += 1
 
@@ -72,6 +75,7 @@ while 1
 	error = {}
 
 	states.each do |s|
+
 		q_n = {}
 		actions[s].each do |a|
 			next_p = (pr[[s, a]] || {s => 1})
@@ -81,22 +85,31 @@ while 1
 				sum += p * v[n-1][s_prime]
 			end
 
-			q_n[[s,a]] = rewards[s] - costs[a] + gamma * sum
+			q_n[[s,a]] = (rewards[s] - costs[a]) + gamma * sum
 		end
 
+		# max { Q(s,a) }
 		v[n][s]  = q_n.values.max
+
+		# argmax { Q(s,a) }
 		pi[n][s] = q_n.select {|k, v| v == q_n.values.max}.keys[0][1]
 
+		# erro iteração n para estado s
 		error[s] = (v[n][s] - v[n-1][s]).abs
 	end
 	
-	
+	# condição de término
 	if error.values.max < epsilon
+		puts "Número de iterações = #{n}"
+		puts
+
 		puts ">> V(s)"
 		v[n].each  {|s, v| puts "V(#{s})  = #{v}"}
 		puts
+
 		puts ">> pi(s)"
 		pi[n].each {|s, a| puts "pi(#{s}) = #{a}"}
+
 		break
 	end
 end
